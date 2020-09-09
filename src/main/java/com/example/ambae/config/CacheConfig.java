@@ -25,7 +25,7 @@ public class CacheConfig
       RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig();
 
       Map<String, RedisCacheConfiguration> configurationMap = new HashMap<>();
-      configurationMap.put( "keys", redisCacheConfiguration.entryTtl( Duration.ofSeconds( keysTtl ) ));
+      configurationMap.put( "ReservationKeyCache", redisCacheConfiguration.entryTtl( Duration.ofSeconds( keysTtl ) ));
       builder.withInitialCacheConfigurations(configurationMap);
     };
   }

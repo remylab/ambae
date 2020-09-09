@@ -11,6 +11,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 public class AmbaeApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AmbaeApplication.class, args);
+		SpringApplication.run( AmbaeApplication.class, args );
 	}
 }

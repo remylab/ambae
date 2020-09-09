@@ -18,8 +18,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @SpringBootTest( webEnvironment = DEFINED_PORT )
 @ContextConfiguration( classes = { AmbaeApplication.class },
-  initializers = { AvailabilityServiceIntegrationTest.Initializer.class } )
-class AvailabilityServiceIntegrationTest
+  initializers = { ReservationKeyCacheIntegrationTest.Initializer.class } )
+class ReservationKeyCacheIntegrationTest
   extends CacheableTest
 {
   @Autowired
@@ -29,15 +29,16 @@ class AvailabilityServiceIntegrationTest
   ReservationKeyRepository keyRepository;
 
   @Autowired
-  private AvailabilityService service;
+  private ReservationKeyCache keyCache;
 
   private Cache cacheKeys;
 
   @BeforeEach
   public void setup()
   {
-    cacheKeys = cacheManager.getCache( "keys" );
+    cacheKeys = cacheManager.getCache( "ReservationKeyCache" );
   }
+  
   @Test
   void testFindReservationId()
     throws InterruptedException
@@ -52,7 +53,7 @@ class AvailabilityServiceIntegrationTest
 
     assertNull( cacheKeys.get( dateKey ) );
 
-    service.findReservationId( dateKey );
+    keyCache.findReservationId( dateKey );
 
     // verify key is cached for 1s only
     assertNotNull( cacheKeys.get( dateKey ) );
@@ -60,7 +61,7 @@ class AvailabilityServiceIntegrationTest
     assertNotNull( cacheKeys.get( dateKey ) );
     assertNotNull( cacheKeys.get( dateKey ) );
 
-    Thread.sleep( 500L );
+    Thread.sleep( 505L );
     assertNull( cacheKeys.get( dateKey ) );
   }
 }

@@ -1,14 +1,16 @@
 package com.example.ambae.service;
 
 import com.example.ambae.AmbaeApplication;
-import com.example.ambae.model.ReservationEntity;
+import com.example.ambae.dto.ReservationRequest;
 import com.example.ambae.model.ReservationKeyEntity;
 import com.example.ambae.repository.ReservationKeyRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.security.InvalidParameterException;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,13 +19,29 @@ import static org.junit.jupiter.api.Assertions.*;
 @ContextConfiguration( classes = { AmbaeApplication.class, ReservationService.class } )
 class ReservationServiceTest
 {
+  private static final LocalDate nowDate = LocalDate.now();
+
   @Autowired
   private ReservationService service;
 
   @Autowired
   private ReservationKeyRepository keyRepo;
 
-  private static final LocalDate nowDate = LocalDate.now();
+  @Test
+  void testCreateReservationTooManyDays() {
+
+    ReservationRequest request = buildRequest( "SMITH",
+                                               "smith@gmail.com",
+                                               nowDate,
+                                               nowDate.plusDays( 3 ) );
+
+    try {
+      service.createReservation( request );
+      fail();
+    } catch ( InvalidParameterException e ) {
+      //ignore
+    }
+  }
 
   @Test
   void testCreateReservation_alreadyBooked() {
@@ -38,33 +56,39 @@ class ReservationServiceTest
 
     keyRepo.save( existingKey );
 
-    ReservationEntity entity = ReservationEntity.builder()
-      .startDate( nowDate )
-      .endDate( endDate )
-      .email( "smith@gmail.com")
-      .lastName( "SMITH" )
-      .build();
+    ReservationRequest request = buildRequest( "SMITH","smith@gmail.com", nowDate, endDate );
 
-    assertEquals( -1L, service.createReservation( entity ) );
+    try {
+      service.createReservation( request );
+      fail();
+    } catch ( DataIntegrityViolationException e ) {
+      //ignore
+    }
   }
 
   @Test
   void testCreateReservation() {
 
-    ReservationEntity entity = ReservationEntity.builder()
-      .startDate( nowDate )
-      .endDate(  nowDate.plusDays( 2 ) )
-      .email( "smith@gmail.com")
-      .lastName( "SMITH" )
-      .build();
+    ReservationRequest request = buildRequest( "SMITH","smith@gmail.com", nowDate, nowDate.plusDays( 2 ) );
 
-    Long reservationId = service.createReservation( entity );
+    Long reservationId = service.createReservation( request );
 
-    ReservationKeyEntity keyStart = keyRepo.findByDateKey( entity.getStartDate().toString() ).orElseThrow();
-    ReservationKeyEntity keyEnd = keyRepo.findByDateKey( entity.getEndDate().toString() ).orElseThrow();
+    ReservationKeyEntity key1 = keyRepo.findByDateKey( nowDate.toString() ).orElseThrow();
+    ReservationKeyEntity key2 = keyRepo.findByDateKey( nowDate.plusDays( 1 ).toString() ).orElseThrow();
+    ReservationKeyEntity key3 = keyRepo.findByDateKey( nowDate.plusDays( 2 ).toString() ).orElseThrow();
 
-    assertEquals( reservationId, keyStart.getReservationId() );
-    assertEquals( reservationId, keyEnd.getReservationId() );
+    // save all dates from start to end
+    assertEquals( reservationId, key1.getReservationId() );
+    assertEquals( reservationId, key2.getReservationId() );
+    assertEquals( reservationId, key3.getReservationId() );
   }
 
+  private ReservationRequest buildRequest( String email, String lastName, LocalDate startDate, LocalDate endDate  ) {
+    return ReservationRequest.builder()
+      .startDate( startDate )
+      .endDate( endDate )
+      .email( email )
+      .lastName( lastName )
+      .build();
+  }
 }

@@ -1,15 +1,18 @@
 package com.example.ambae.service;
 
+import com.example.ambae.dto.ReservationRequest;
 import com.example.ambae.model.ReservationEntity;
 import com.example.ambae.model.ReservationKeyEntity;
 import com.example.ambae.repository.ReservationKeyRepository;
 import com.example.ambae.repository.ReservationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
+import java.security.InvalidParameterException;
 import java.time.LocalDate;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Service
 public class ReservationService
@@ -21,34 +24,54 @@ public class ReservationService
   private ReservationKeyRepository keyRepo;
 
   @Transactional
-  public Long createReservation( ReservationEntity reservationEntity )
+  public Long createReservation( ReservationRequest request )
   {
-    try
+    LocalDate startDate = request.getStartDate();
+    LocalDate endDate = request.getEndDate();
+
+    validateDates( startDate, endDate );
+
+    ReservationEntity savedEntity = repo.save( buildEntity( request) );
+    Long id = savedEntity.getId();
+
+    long nbDays = DAYS.between( startDate, endDate ) + 1;
+    for ( var i = 0; i < nbDays; i++ )
     {
-      return doCreateReservation( reservationEntity );
-    } catch ( DataIntegrityViolationException e )
-    {
-      return -1L;
+      LocalDate date = startDate.plusDays( i );
+      keyRepo.save( buildKey( id, date ) );
     }
-  }
-
-  private Long doCreateReservation( ReservationEntity reservationEntity )
-  {
-    ReservationEntity savedEntity = repo.save( reservationEntity );
-
-    Long id = reservationEntity.getId();
-
-    keyRepo.save( buildKey( id, savedEntity.getStartDate() ) );
-    keyRepo.save( buildKey( id, savedEntity.getEndDate() ) );
 
     return id;
   }
 
-  private ReservationKeyEntity buildKey( Long id, LocalDate keyDate )
+  private ReservationKeyEntity buildKey( Long id, LocalDate date )
   {
     return ReservationKeyEntity.builder()
-        .dateKey( keyDate.toString() )
+        .dateKey( date.toString() )
         .reservationId( id )
         .build();
+  }
+
+  private ReservationEntity buildEntity( ReservationRequest request )
+  {
+    return ReservationEntity.builder()
+      .email( request.getEmail() )
+      .lastName( request.getLastName() )
+      .firstName( request.getFirstName() )
+      .startDate( request.getStartDate() )
+      .endDate( request.getEndDate() )
+      .build();
+  }
+
+  public void validateDates( LocalDate startDate, LocalDate endDate )
+  {
+    if ( startDate.isAfter( endDate ) || startDate.equals( endDate ) ) {
+      throw new InvalidParameterException( "endDate must be after startDate" );
+    }
+
+    long nbDays = DAYS.between( startDate, endDate ) + 1;
+    if ( nbDays > 3 ) {
+      throw new InvalidParameterException( "reservations are for maximum 3 days" );
+    }
   }
 }
