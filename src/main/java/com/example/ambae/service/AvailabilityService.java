@@ -16,6 +16,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 public class AvailabilityService
 {
   private static final long DEFAULT_NB_DAYS = 30;
+  private static final long MAX_TOTAL_DAYS = 90;
 
   @Autowired
   private ReservationKeyService keyCache;
@@ -52,10 +53,10 @@ public class AvailabilityService
   private void validateDates( LocalDate startDate, LocalDate endDate )
   {
     LocalDate today = LocalDate.now();
-    long daysInAdvance = DAYS.between( today, endDate );
+    long daysInAdvance = DAYS.between( today, endDate )+1;
 
-    if ( daysInAdvance > 30 ) {
-      throw new InvalidParameterException( "cannot fetch availability for more that 30 days" );
+    if ( daysInAdvance > MAX_TOTAL_DAYS ) {
+      throw new InvalidParameterException( "cannot fetch availability for more than " + MAX_TOTAL_DAYS + " days" );
     }
 
     if ( endDate.compareTo( startDate ) < 0 )

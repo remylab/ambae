@@ -34,6 +34,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -247,17 +248,16 @@ class MainControllerIntegrationTest
   }
 
   @Test
-  void testGetAvailabilityByDates_moreThan30Days_shouldFail()
+  void testGetAvailabilityByDates_moreThan90Days_shouldFail()
     throws Exception
   {
     LocalDate startDate = TODAY;
-    LocalDate endDate = TODAY.plusDays( 31 );
+    LocalDate endDate = TODAY.plusDays( 90 );
 
     MvcResult res = mockMvc.perform( get( "/availability/" + startDate + "/" + endDate ) )
       .andReturn();
     assertEquals( HttpStatus.BAD_REQUEST.value(), res.getResponse().getStatus() );
-    assertEquals( "cannot fetch availability for more that 30 days",
-                  res.getResponse().getContentAsString() );
+    assertTrue( res.getResponse().getContentAsString().startsWith( "cannot fetch availability for more than") );
   }
 
   @Test
