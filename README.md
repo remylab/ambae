@@ -1,8 +1,11 @@
 # Start the app
 
-mvn package -DskipTests
-
+mvn package -DskipTests  
 sh start-dev.sh
+
+For H2 browse : http://localhost:9000/h2  
+
+JDBC URL = `jdbc:h2:mem:testdb` / user,pwd = `sa`
 
 # Endpoints
 
