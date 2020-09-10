@@ -30,6 +30,11 @@ public class AvailabilityService
 
   public List<LocalDate> getAvailability( LocalDate startDate, LocalDate endDate ){
 
+    LocalDate today = LocalDate.now();
+    if ( startDate.isBefore( today ) ) {
+      startDate = today;
+    }
+
     validateDates( startDate, endDate );
     List<LocalDate> availableDates = newArrayList();
 
@@ -46,6 +51,13 @@ public class AvailabilityService
 
   private void validateDates( LocalDate startDate, LocalDate endDate )
   {
+    LocalDate today = LocalDate.now();
+    long daysInAdvance = DAYS.between( today, endDate );
+
+    if ( daysInAdvance > 30 ) {
+      throw new InvalidParameterException( "cannot fetch availability for more that 30 days" );
+    }
+
     if ( endDate.compareTo( startDate ) < 0 )
     {
       throw new InvalidParameterException( "endDate must be after startDate" );

@@ -146,7 +146,8 @@ class MainControllerIntegrationTest
       .andReturn();
 
     assertEquals( HttpStatus.BAD_REQUEST.value(), res.getResponse().getStatus() );
-    assertEquals( "reservations cannot be done more than 1 month in advance", res.getResponse().getContentAsString() );
+    assertEquals( "reservations cannot be done more than 1 month in advance",
+                  res.getResponse().getContentAsString() );
   }
 
   @Test
@@ -243,6 +244,38 @@ class MainControllerIntegrationTest
 
     // after : cache is populated
     assertNotNull( cacheKeys.get( startDate.toString() ) );
+  }
+
+  @Test
+  void testGetAvailabilityByDates_moreThan30Days_shouldFail()
+    throws Exception
+  {
+    LocalDate startDate = TODAY;
+    LocalDate endDate = TODAY.plusDays( 31 );
+
+    MvcResult res = mockMvc.perform( get( "/availability/" + startDate + "/" + endDate ) )
+      .andReturn();
+    assertEquals( HttpStatus.BAD_REQUEST.value(), res.getResponse().getStatus() );
+    assertEquals( "cannot fetch availability for more that 30 days",
+                  res.getResponse().getContentAsString() );
+  }
+
+  @Test
+  void testGetAvailabilityByDates_startInPast()
+    throws Exception
+  {
+    LocalDate startDate = TODAY.minusDays( 10 );
+    LocalDate endDate = TODAY.plusDays( 2 );
+
+    MvcResult res = mockMvc.perform( get( "/availability/" + startDate + "/" + endDate ) )
+      .andReturn();
+    assertEquals( HttpStatus.OK.value(), res.getResponse().getStatus() );
+
+    List<String> availableDates = Arrays.asList( mapper.readValue( res.getResponse().getContentAsString(),
+                                                                   String[].class ) );
+
+    // startDate should default to today
+    assertEquals( 3, availableDates.size() );
   }
 
   @Test
