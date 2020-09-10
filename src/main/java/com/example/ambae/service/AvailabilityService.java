@@ -15,13 +15,16 @@ import static java.time.temporal.ChronoUnit.DAYS;
 @Service
 public class AvailabilityService
 {
+  private static final long DEFAULT_NB_DAYS = 30;
+
   @Autowired
-  private ReservationKeyCache keyCache;
+  private ReservationKeyService keyCache;
 
   public List<LocalDate> getAvailability()
   {
     LocalDate startDate = LocalDate.now();
-    LocalDate endDate = startDate.plusDays( 30 );
+    // including today it will make a total of 30 days to evaluate
+    LocalDate endDate = startDate.plusDays( DEFAULT_NB_DAYS - 1L );
     return getAvailability( startDate, endDate );
   }
 
@@ -43,7 +46,7 @@ public class AvailabilityService
 
   private void validateDates( LocalDate startDate, LocalDate endDate )
   {
-    if ( startDate.isAfter( endDate ) )
+    if ( endDate.compareTo( startDate ) < 0 )
     {
       throw new InvalidParameterException( "endDate must be after startDate" );
     }

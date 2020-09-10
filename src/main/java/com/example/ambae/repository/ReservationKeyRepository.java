@@ -9,4 +9,5 @@ public interface ReservationKeyRepository
   extends CrudRepository<ReservationKeyEntity, String>
 {
   Optional<ReservationKeyEntity> findByDateKey( String dateKey );
+  void deleteByDateKey( String dateKey );
 }

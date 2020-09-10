@@ -13,10 +13,12 @@ import org.springframework.test.context.ContextConfiguration;
 import java.security.InvalidParameterException;
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @DataJpaTest
-@ContextConfiguration( classes = { AmbaeApplication.class, ReservationService.class } )
+@ContextConfiguration( classes = { AmbaeApplication.class, ReservationService.class, ReservationKeyService.class } )
 class ReservationServiceTest
 {
   private static final LocalDate nowDate = LocalDate.now();
@@ -28,7 +30,71 @@ class ReservationServiceTest
   private ReservationKeyRepository keyRepo;
 
   @Test
-  void testCreateReservationTooManyDays() {
+  void testUpdateReservationOneDayDiff_shouldUpdateKeys() {
+
+    LocalDate previousStartDate = nowDate.plusDays( 4 );
+    LocalDate previousEndDate = nowDate.plusDays( 6 );
+
+    LocalDate newStartDate = nowDate.plusDays( 3 );
+    LocalDate newEndDate = nowDate.plusDays( 5 );
+
+    ReservationRequest request = buildRequest( "SMITH",
+                                               "smith@gmail.com",
+                                               previousStartDate,
+                                               previousEndDate );
+
+    Long reservationId = service.createReservation( request );
+
+    ReservationRequest updateRequest = buildRequest( "SMITH",
+                                                     "new-smith@gmail.com",
+                                                     newStartDate,
+                                                     newEndDate );
+
+    service.updateReservation( reservationId, updateRequest );
+
+    // new dates should be there
+    assertEquals( reservationId, keyRepo.findByDateKey( newStartDate.toString() ).orElseThrow().getReservationId() );
+    assertEquals( reservationId, keyRepo.findByDateKey( newStartDate.plusDays( 1 ).toString() ).orElseThrow().getReservationId() );
+    assertEquals( reservationId, keyRepo.findByDateKey( newEndDate.toString() ).orElseThrow().getReservationId() );
+
+    // old end date should be removed
+    assertTrue( keyRepo.findByDateKey( previousEndDate.toString() ).isEmpty() );
+  }
+
+  @Test
+  void testCreateReservationOneDay() {
+
+    LocalDate tripDay = nowDate.plusDays( 2 );
+
+    ReservationRequest request = buildRequest( "SMITH",
+                                               "smith@gmail.com",
+                                               tripDay,
+                                               tripDay );
+
+    Long reservationId = service.createReservation( request );
+
+    ReservationKeyEntity key1 = keyRepo.findByDateKey( tripDay.toString() ).orElseThrow();
+    assertEquals( reservationId, key1.getReservationId() );
+  }
+
+  @Test
+  void testCreateReservationTooFarAhead_shouldThrow() {
+
+    ReservationRequest request = buildRequest( "SMITH",
+                                               "smith@gmail.com",
+                                               nowDate.plusDays( 31 ),
+                                               nowDate.plusDays( 33 ) );
+
+    try {
+      service.createReservation( request );
+      fail();
+    } catch ( InvalidParameterException e ) {
+      //ignore
+    }
+  }
+
+  @Test
+  void testCreateReservationTooLate_shouldThrow() {
 
     ReservationRequest request = buildRequest( "SMITH",
                                                "smith@gmail.com",
@@ -44,19 +110,35 @@ class ReservationServiceTest
   }
 
   @Test
-  void testCreateReservation_alreadyBooked() {
+  void testCreateReservationTooManyDays_shouldThrow() {
 
+    ReservationRequest request = buildRequest( "SMITH",
+                                               "smith@gmail.com",
+                                               nowDate.plusDays( 1 ),
+                                               nowDate.plusDays( 4 ) );
+
+    try {
+      service.createReservation( request );
+      fail();
+    } catch ( InvalidParameterException e ) {
+      //ignore
+    }
+  }
+
+  @Test
+  void testCreateReservation_endDateAlreadyBooked_shouldThrow() {
+
+    LocalDate startDate = nowDate.plusDays( 1 );
     LocalDate endDate = nowDate.plusDays( 2 );
 
-    Long existingReservationId = 22L;
+    // adding end date in keys
     ReservationKeyEntity existingKey = ReservationKeyEntity.builder()
       .dateKey( endDate.toString() )
-      .reservationId( existingReservationId )
+      .reservationId( 22L )
       .build();
-
     keyRepo.save( existingKey );
 
-    ReservationRequest request = buildRequest( "SMITH","smith@gmail.com", nowDate, endDate );
+    ReservationRequest request = buildRequest( "SMITH", "smith@gmail.com", startDate, endDate );
 
     try {
       service.createReservation( request );
@@ -69,13 +151,15 @@ class ReservationServiceTest
   @Test
   void testCreateReservation() {
 
-    ReservationRequest request = buildRequest( "SMITH","smith@gmail.com", nowDate, nowDate.plusDays( 2 ) );
+    LocalDate startDate = nowDate.plusDays( 1 );
+    LocalDate endDate = startDate.plusDays( 2 );
+    ReservationRequest request = buildRequest( "SMITH","smith@gmail.com", startDate, endDate );
 
     Long reservationId = service.createReservation( request );
 
-    ReservationKeyEntity key1 = keyRepo.findByDateKey( nowDate.toString() ).orElseThrow();
-    ReservationKeyEntity key2 = keyRepo.findByDateKey( nowDate.plusDays( 1 ).toString() ).orElseThrow();
-    ReservationKeyEntity key3 = keyRepo.findByDateKey( nowDate.plusDays( 2 ).toString() ).orElseThrow();
+    ReservationKeyEntity key1 = keyRepo.findByDateKey( startDate.toString() ).orElseThrow();
+    ReservationKeyEntity key2 = keyRepo.findByDateKey( startDate.plusDays( 1 ).toString() ).orElseThrow();
+    ReservationKeyEntity key3 = keyRepo.findByDateKey( startDate.plusDays( 2 ).toString() ).orElseThrow();
 
     // save all dates from start to end
     assertEquals( reservationId, key1.getReservationId() );

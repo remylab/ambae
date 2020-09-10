@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.testcontainers.containers.GenericContainer;
 
-public class CacheableTest
+public class BaseIntegrationTest
 {
   @ClassRule
   public static GenericContainer redisContainer;

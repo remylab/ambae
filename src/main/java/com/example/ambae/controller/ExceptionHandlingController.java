@@ -12,8 +12,9 @@ public class ExceptionHandlingController
 {
   @ResponseStatus( HttpStatus.CONFLICT )
   @ExceptionHandler( DataIntegrityViolationException.class)
-  @ResponseBody String handleConflict( Exception ex ) {
-    return ex.getMessage();
+  @ResponseBody String handleConflict() {
+    // should be handled with custom exception to provide accurate details
+    return "there was an error when saving this reservation";
   }
 
   @ResponseStatus( HttpStatus.BAD_REQUEST )

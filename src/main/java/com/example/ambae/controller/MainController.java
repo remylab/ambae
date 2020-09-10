@@ -1,18 +1,22 @@
 package com.example.ambae.controller;
 
 import com.example.ambae.dto.ReservationRequest;
+import com.example.ambae.model.ReservationEntity;
 import com.example.ambae.service.AvailabilityService;
 import com.example.ambae.service.ReservationService;
-import com.google.common.collect.ImmutableList;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -47,8 +51,27 @@ public class MainController
 
   @PostMapping( path = "/reservations" )
   @ResponseBody
-  public Long createReservation( @Valid @RequestBody ReservationRequest request ) {
-    return reservationService.createReservation( request );
+  public ResponseEntity<Long> createReservation( @Valid @RequestBody ReservationRequest request ) {
+    return ResponseEntity.status( HttpStatus.CREATED ).body( reservationService.createReservation( request ) );
+  }
+
+  @GetMapping( path = "/reservations/{id}" )
+  @ResponseBody
+  public ReservationEntity getReservation( @PathVariable( name = "id" ) long id  ) {
+    return reservationService.getSingle( id );
+  }
+
+  @DeleteMapping( path = "/reservations/{id}" )
+  public ResponseEntity<Void> deleteReservation( @PathVariable( name = "id" ) long id ) {
+    reservationService.deleteReservation( id );
+    return ResponseEntity.status( HttpStatus.NO_CONTENT ).build();
+  }
+
+  @PutMapping( path = "/reservations/{id}" )
+  public ResponseEntity<Void> updateReservation( @PathVariable( name = "id" ) long id,
+                                 @Valid @RequestBody ReservationRequest request ) {
+    reservationService.updateReservation( id, request );
+    return ResponseEntity.status( HttpStatus.NO_CONTENT ).build();
   }
 
 }

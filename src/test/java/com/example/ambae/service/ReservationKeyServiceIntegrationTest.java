@@ -1,7 +1,7 @@
 package com.example.ambae.service;
 
 import com.example.ambae.AmbaeApplication;
-import com.example.ambae.CacheableTest;
+import com.example.ambae.BaseIntegrationTest;
 import com.example.ambae.model.ReservationKeyEntity;
 import com.example.ambae.repository.ReservationKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,31 +12,53 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.context.ContextConfiguration;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
 
 @SpringBootTest( webEnvironment = DEFINED_PORT )
 @ContextConfiguration( classes = { AmbaeApplication.class },
-  initializers = { ReservationKeyCacheIntegrationTest.Initializer.class } )
-class ReservationKeyCacheIntegrationTest
-  extends CacheableTest
+  initializers = { ReservationKeyServiceIntegrationTest.Initializer.class } )
+class ReservationKeyServiceIntegrationTest
+  extends BaseIntegrationTest
 {
-  @Autowired
-  CacheManager cacheManager;
-
   @Autowired
   ReservationKeyRepository keyRepository;
 
   @Autowired
-  private ReservationKeyCache keyCache;
+  private ReservationKeyService keyService;
 
+  @Autowired
+  CacheManager cacheManager;
   private Cache cacheKeys;
 
   @BeforeEach
-  public void setup()
+  public void setup() {
+    cacheKeys = cacheManager.getCache( ReservationKeyService.CACHE_KEY );
+    cacheKeys.clear();
+  }
+
+  @Test
+  void testSaveAndDelete_shouldRemoveFromCache()
   {
-    cacheKeys = cacheManager.getCache( "ReservationKeyCache" );
+    String dateKey = "2020-09-07";
+
+    ReservationKeyEntity entity = ReservationKeyEntity.builder()
+      .dateKey( dateKey )
+      .reservationId( 123L )
+      .build();
+    keyRepository.save( entity );
+
+    assertNull( cacheKeys.get( dateKey ) );
+
+    keyService.findReservationId( dateKey );
+
+    // verify key is in cache
+    assertNotNull( cacheKeys.get( dateKey ) );
+    keyService.deleteByDateKey( dateKey );
+
+    // verify key is remove from cache directly after a delete
+    assertNull( cacheKeys.get( dateKey ) );
   }
   
   @Test
@@ -53,7 +75,7 @@ class ReservationKeyCacheIntegrationTest
 
     assertNull( cacheKeys.get( dateKey ) );
 
-    keyCache.findReservationId( dateKey );
+    keyService.findReservationId( dateKey );
 
     // verify key is cached for 1s only
     assertNotNull( cacheKeys.get( dateKey ) );
