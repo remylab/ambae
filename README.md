@@ -40,7 +40,7 @@ curl -X DELETE http://localhost:9000/reservations/1
 
 ## Update Reservation
 ```
-curl -X PUT 'http://localhost:9000/reservations' \
+curl -X PUT 'http://localhost:9000/reservations/1' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "email": "new-remy@mail.com",
