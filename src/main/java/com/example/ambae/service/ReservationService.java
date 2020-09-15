@@ -37,10 +37,7 @@ public class ReservationService
     ReservationEntity savedEntity = repo.save( buildEntity( request) );
     Long id = savedEntity.getId();
 
-    long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ )
-    {
-      LocalDate date = startDate.plusDays( i );
+    for (LocalDate date = startDate; date.compareTo( endDate ) <= 0; date = date.plusDays(1)) {
       keyService.save( buildKey( id, date ) );
     }
 
@@ -91,9 +88,7 @@ public class ReservationService
     LocalDate startDate = entity.getStartDate();
     LocalDate endDate = entity.getEndDate();
 
-    long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ ) {
-      LocalDate date = startDate.plusDays( i );
+    for (LocalDate date = startDate; date.compareTo( endDate ) <= 0; date = date.plusDays(1)) {
       keyService.deleteByDateKey( date.toString() );
     }
     repo.delete( entity );
@@ -107,9 +102,8 @@ public class ReservationService
   private Set<LocalDate> buildDateSet( LocalDate startDate, LocalDate endDate )
   {
     Set<LocalDate> dates = new HashSet<>();
-    long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ ) {
-      dates.add( startDate.plusDays( i ) );
+    for (LocalDate date = startDate; date.compareTo( endDate ) <= 0; date = date.plusDays(1)) {
+      dates.add( date );
     }
     return dates;
   }

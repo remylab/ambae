@@ -39,9 +39,7 @@ public class AvailabilityService
     validateDates( startDate, endDate );
     List<LocalDate> availableDates = newArrayList();
 
-    long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ ) {
-      LocalDate date = startDate.plusDays( i );
+    for (LocalDate date = startDate; date.compareTo( endDate ) <= 0; date = date.plusDays(1)) {
       if ( keyService.findReservationId( date.toString() ) == null ) {
         availableDates.add( date );
       }
