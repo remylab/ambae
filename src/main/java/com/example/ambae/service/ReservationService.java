@@ -4,7 +4,7 @@ import com.example.ambae.dto.ReservationRequest;
 import com.example.ambae.model.ReservationEntity;
 import com.example.ambae.model.ReservationKeyEntity;
 import com.example.ambae.repository.ReservationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +17,14 @@ import java.util.Set;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
+@AllArgsConstructor
 @Service
 public class ReservationService
 {
   private static final String RESERVATION_NOT_FOUND = "reservation not found";
 
-  @Autowired
-  private ReservationRepository repo;
-
-  @Autowired
-  private ReservationKeyService keyService;
+  private final ReservationRepository repo;
+  private final ReservationKeyService keyService;
 
   @Transactional
   public Long createReservation( ReservationRequest request )
@@ -84,22 +82,6 @@ public class ReservationService
     repo.save( entity );
   }
 
-  public ReservationEntity getSingle( long id ){
-    return repo.findById( id )
-      .orElseThrow( () -> new ResponseStatusException( HttpStatus.NOT_FOUND, RESERVATION_NOT_FOUND ) );
-  }
-
-  private Set<LocalDate> buildDateSet( LocalDate startDate, LocalDate endDate )
-  {
-    Set<LocalDate> dates = new HashSet<>();
-    long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ )
-    {
-      dates.add( startDate.plusDays( i ) );
-    }
-    return dates;
-  }
-
   @Transactional
   public void deleteReservation( long reservationId )
   {
@@ -110,12 +92,26 @@ public class ReservationService
     LocalDate endDate = entity.getEndDate();
 
     long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ )
-    {
+    for ( var i = 0; i < nbDays; i++ ) {
       LocalDate date = startDate.plusDays( i );
       keyService.deleteByDateKey( date.toString() );
     }
     repo.delete( entity );
+  }
+
+  public ReservationEntity getSingle( long id ){
+    return repo.findById( id )
+      .orElseThrow( () -> new ResponseStatusException( HttpStatus.NOT_FOUND, RESERVATION_NOT_FOUND ) );
+  }
+
+  private Set<LocalDate> buildDateSet( LocalDate startDate, LocalDate endDate )
+  {
+    Set<LocalDate> dates = new HashSet<>();
+    long nbDays = DAYS.between( startDate, endDate ) + 1;
+    for ( var i = 0; i < nbDays; i++ ) {
+      dates.add( startDate.plusDays( i ) );
+    }
+    return dates;
   }
 
   private ReservationKeyEntity buildKey( Long id, LocalDate date )
@@ -137,7 +133,7 @@ public class ReservationService
       .build();
   }
 
-  public void validateDates( LocalDate startDate, LocalDate endDate )
+  private void validateDates( LocalDate startDate, LocalDate endDate )
   {
     LocalDate today = LocalDate.now();
 

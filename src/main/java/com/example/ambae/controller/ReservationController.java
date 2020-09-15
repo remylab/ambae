@@ -6,12 +6,10 @@ import com.example.ambae.service.AvailabilityService;
 import com.example.ambae.service.ReservationService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,15 +23,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
-@Validated
 @AllArgsConstructor
 @Controller
-public class MainController
+public class ReservationController
 {
-  @Autowired
   private final AvailabilityService availabilityService;
-
-  @Autowired
   private final ReservationService reservationService;
 
   @GetMapping( path = "/availability" )

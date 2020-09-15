@@ -15,7 +15,7 @@ import java.time.LocalDate;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DataJpaTest
 @ContextConfiguration( classes = { AmbaeApplication.class, ReservationService.class, ReservationKeyService.class } )
@@ -85,12 +85,7 @@ class ReservationServiceTest
                                                nowDate.plusDays( 31 ),
                                                nowDate.plusDays( 33 ) );
 
-    try {
-      service.createReservation( request );
-      fail();
-    } catch ( InvalidParameterException e ) {
-      //ignore
-    }
+    assertThrows( InvalidParameterException.class, () -> service.createReservation( request ) );
   }
 
   @Test
@@ -101,12 +96,7 @@ class ReservationServiceTest
                                                nowDate,
                                                nowDate.plusDays( 3 ) );
 
-    try {
-      service.createReservation( request );
-      fail();
-    } catch ( InvalidParameterException e ) {
-      //ignore
-    }
+    assertThrows( InvalidParameterException.class, () -> service.createReservation( request ) );
   }
 
   @Test
@@ -117,12 +107,7 @@ class ReservationServiceTest
                                                nowDate.plusDays( 1 ),
                                                nowDate.plusDays( 4 ) );
 
-    try {
-      service.createReservation( request );
-      fail();
-    } catch ( InvalidParameterException e ) {
-      //ignore
-    }
+    assertThrows( InvalidParameterException.class, () -> service.createReservation( request ) );
   }
 
   @Test
@@ -140,12 +125,7 @@ class ReservationServiceTest
 
     ReservationRequest request = buildRequest( "SMITH", "smith@gmail.com", startDate, endDate );
 
-    try {
-      service.createReservation( request );
-      fail();
-    } catch ( DataIntegrityViolationException e ) {
-      //ignore
-    }
+    assertThrows( DataIntegrityViolationException.class, () -> service.createReservation( request ) );
   }
 
   @Test

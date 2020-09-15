@@ -20,12 +20,12 @@ class AvailabilityServiceTest
   private AvailabilityService service;
 
   @Mock
-  private ReservationKeyService mockKeyCache;
+  private ReservationKeyService mockKeyService;
 
   @BeforeEach
-  public void setup(){
-    service = new AvailabilityService();
-    ReflectionTestUtils.setField( service, "keyCache", mockKeyCache );
+  public void setup() {
+    service = new AvailabilityService( mockKeyService );
+    ReflectionTestUtils.setField( service, "keyService", mockKeyService );
   }
 
   @Test
@@ -34,7 +34,7 @@ class AvailabilityServiceTest
     LocalDate tripDay = LocalDate.now().plusDays( 1 );
 
     // no reservation found, means it's available
-    when( mockKeyCache.findReservationId( tripDay.toString() ) ).thenReturn( null );
+    when( mockKeyService.findReservationId( tripDay.toString() ) ).thenReturn( null );
 
     List<LocalDate> availableDates = service.getAvailability( tripDay, tripDay );
     assertEquals( 1, availableDates.size() );

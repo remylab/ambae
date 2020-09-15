@@ -1,7 +1,7 @@
 package com.example.ambae.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.InvalidParameterException;
@@ -12,14 +12,14 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
+@AllArgsConstructor
 @Service
 public class AvailabilityService
 {
   private static final long DEFAULT_NB_DAYS = 30;
   private static final long MAX_TOTAL_DAYS = 90;
 
-  @Autowired
-  private ReservationKeyService keyCache;
+  private final ReservationKeyService keyService;
 
   public List<LocalDate> getAvailability()
   {
@@ -40,10 +40,9 @@ public class AvailabilityService
     List<LocalDate> availableDates = newArrayList();
 
     long nbDays = DAYS.between( startDate, endDate ) + 1;
-    for ( var i = 0; i < nbDays; i++ )
-    {
+    for ( var i = 0; i < nbDays; i++ ) {
       LocalDate date = startDate.plusDays( i );
-      if ( keyCache.findReservationId(  date.toString() ) == null ) {
+      if ( keyService.findReservationId( date.toString() ) == null ) {
         availableDates.add( date );
       }
     }

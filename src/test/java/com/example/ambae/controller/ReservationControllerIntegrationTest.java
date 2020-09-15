@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.shaded.com.google.common.collect.Iterables;
@@ -44,12 +46,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 @Slf4j
+@RunWith( SpringRunner.class )
 @SpringBootTest( webEnvironment = DEFINED_PORT )
-@DirtiesContext(classMode = ClassMode.AFTER_CLASS) // to ensure the app is shutdown after the test suite
+@DirtiesContext( classMode = ClassMode.AFTER_CLASS ) // to ensure the app is shutdown after the test suite
 @AutoConfigureMockMvc
 @ContextConfiguration( classes = { AmbaeApplication.class },
-  initializers = { MainControllerIntegrationTest.Initializer.class } )
-class MainControllerIntegrationTest
+  initializers = { ReservationControllerIntegrationTest.Initializer.class } )
+class ReservationControllerIntegrationTest
   extends BaseIntegrationTest
 {
   private final static LocalDate TODAY = LocalDate.now();
@@ -74,6 +77,22 @@ class MainControllerIntegrationTest
   public void setup() {
     cacheKeys = cacheManager.getCache( ReservationKeyService.CACHE_KEY );
     cacheKeys.clear();
+  }
+
+  @Test
+  void testCreateMissingEmail()
+    throws Exception
+  {
+    ReservationRequest request = buildRequest( TODAY.plusDays( 2 ), TODAY.plusDays( 4 ) );
+    request.setEmail( null );
+
+    String content = mapper.writeValueAsString( request );
+    MvcResult res = mockMvc.perform( post( "/reservations" )
+                                       .contentType( APPLICATION_JSON )
+                                       .content( content ) )
+      .andReturn();
+
+    assertEquals( HttpStatus.BAD_REQUEST.value(), res.getResponse().getStatus() );
   }
 
   @Test
